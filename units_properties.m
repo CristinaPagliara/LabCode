@@ -2,14 +2,12 @@ clear
 clc
 
 % 1 import and set
-expRootFolder = 'C:\Users\cristina.pagliara\code\LabCode';
+expRootFolder = 'E:\PhD\E04_PERIPE_PP-CP\Data\ephys analyses';
 load(fullfile(expRootFolder, 'pooledTable.mat'), 'T')
 load(fullfile(expRootFolder, 'pooledDataSet.mat'), 'ts')
 
 %% 1.1 extract selected units and trials 
-units_conditions= T.name == "Caudoputamen"; %filter units
-T_units=find(units_conditions)';
-
+T_units=find(T.name == "Caudoputamen")';
 numUnits = length(T_units);
 
 %fix this 
@@ -23,7 +21,6 @@ meanFiring_hit = nan(numUnits, 2);
 meanFiring_far = nan(numUnits, 3);
 
 p_values_hit = nan(1, numUnits);
-
 p_values_app = nan(1, numUnits);
 p_values_rec = nan(1, numUnits);
 
@@ -32,15 +29,17 @@ for n=1:numUnits %loop on caudoputamen units
     ms=T.mouseNum(neuron);
     cellID=T.uID(T_units(n));
 
-    hit_trials= find(ts(ms).T.isHit == 1)';
-    near_trials= find(ts(ms).T.isNear == 1)';
-    contact_trials= find(ts(ms).T.isNear == 1 | ts(ms).T.isHit == 1)';
-    far_trials= find(ts(ms).T.isFar == 1 & ts(ms).T.isLit == 1 & ts(ms).T.isDarkTrial == 0)';
+    hit_trials= find(ts(ms).T.endloc == 3 & ts(ms).T.phase == 2 & ts(ms).T.sideIdx == 1 & ts(ms).T.speeds == 2)';
+    % near_trials= find(ts(ms).T.isNear == 1)';
+    % contact_trials= find(ts(ms).T.isNear == 1 | ts(ms).T.isHit == 1)';
+    far_trials= find(ts(ms).T.endloc == 1 & ts(ms).T.isLit == 1 & ts(ms).T.isDarkTrial == 0 & ts(ms).T.sideIdx == 1 & ts(ms).T.speeds == 2)';
 
     for hit_t=1:length(hit_trials) %loop on hit_trials
         trial_hit=hit_trials(hit_t);
-        hit_baseline(hit_t,n)=sum(T.spikeTimes{neuron,1}>ts(ms).T.Toff_rec(trial_hit-1) & T.spikeTimes{neuron,1}<ts(ms).T.Ton(trial_hit))/(ts(ms).T.Ton(trial_hit)-ts(ms).T.Toff_rec(trial_hit-1));
-        contact_firing(hit_t,n)=sum(T.spikeTimes{neuron,1}>ts(ms).T.Toff(trial_hit) & T.spikeTimes{neuron,1}<ts(ms).T.Ton_rec(trial_hit))/(ts(ms).T.Ton_rec(trial_hit)-ts(ms).T.Toff(trial_hit));
+        %hit_baseline(hit_t,n)=sum(T.spikeTimes{neuron,1}>ts(ms).T.Toff_rec(trial_hit-1) & T.spikeTimes{neuron,1}<ts(ms).T.Ton(trial_hit))/(ts(ms).T.Ton(trial_hit)-ts(ms).T.Toff_rec(trial_hit-1));
+        %contact_firing(hit_t,n)=sum(T.spikeTimes{neuron,1}>ts(ms).T.Toff(trial_hit) & T.spikeTimes{neuron,1}<ts(ms).T.Ton_rec(trial_hit))/(ts(ms).T.Ton_rec(trial_hit)-ts(ms).T.Toff(trial_hit));
+        hit_baseline(hit_t,n)=sum(T.spikeTimes{neuron,1}>ts(ms).T.Ton(trial_hit)-1 & T.spikeTimes{neuron,1}<ts(ms).T.Ton(trial_hit)-0.5)/((ts(ms).T.Ton(trial_hit)-0.5) - (ts(ms).T.Ton(trial_hit)-1));
+        contact_firing(hit_t,n)=sum(T.spikeTimes{neuron,1}>ts(ms).T.Toff(trial_hit) & T.spikeTimes{neuron,1}<ts(ms).T.Toff(trial_hit)+0.5)/((ts(ms).T.Toff(trial_hit)+0.5) -ts(ms).T.Toff(trial_hit));        
     end
 
     % Compute the average firing rate over all trials for each condition
